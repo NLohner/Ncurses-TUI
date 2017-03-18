@@ -1,4 +1,5 @@
-all: edit 1730ed2
+all: 1730ed 1730ed2 Buffer.o
+
 
 edit.o: edit.cpp
 	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -c edit.cpp -lncurses 
@@ -11,6 +12,10 @@ edit: edit.o
 
 1730ed2: 1730ed2.o
 	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -o 1730ed2 1730ed2.o -lncurses
+
+Buffer.o: Buffer.cpp
+	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -c Buffer.cpp
+
 clean:
 	rm -f edit 1730ed2
 	rm -f *.o
