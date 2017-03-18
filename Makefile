@@ -1,4 +1,4 @@
-all: 1730ed 1730ed2
+all: 1730ed 1730ed2 Buffer.o
 
 1730ed.o: 1730ed.cpp
 	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -c 1730ed.cpp
@@ -11,6 +11,10 @@ all: 1730ed 1730ed2
 
 1730ed2: 1730ed2.o
 	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -o 1730ed2 1730ed2.o -lncurses
+
+Buffer.o: Buffer.cpp
+	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -c Buffer.cpp
+
 clean:
 	rm -f 1730ed 1730ed2
 	rm -f *.o
