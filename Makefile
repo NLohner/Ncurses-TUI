@@ -1,21 +1,28 @@
-all: 1730ed 1730ed2 Buffer.o
+all: 1730ed 1730ed2 Buffer.o 1730ed
 
+FLAGS = -Wall -std=c++14 -g -O0 -pedantic-errors
 
 edit.o: edit.cpp
-	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -c edit.cpp -lncurses 
+	g++ $(FLAGS) -c edit.cpp -lncurses 
 
 edit: edit.o
-	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -o edit edit.o -lncurses
+	g++ $(FLAGS) -o edit edit.o -lncurses
 
 1730ed2.o: 1730ed2.cpp
-	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -c 1730ed2.cpp
+	g++ $(FLAGS) -c 1730ed2.cpp
 
 1730ed2: 1730ed2.o
-	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -o 1730ed2 1730ed2.o -lncurses
+	g++ $(FLAGS) -o 1730ed2 1730ed2.o -lncurses
 
 Buffer.o: Buffer.cpp
-	g++ -Wall -std=c++14 -g -O0 -pedantic-errors -c Buffer.cpp
+	g++ $(FLAGS) -c Buffer.cpp
+
+1730ed: 1730ed.o
+	g++ $(FLAGS) -o 1730ed 1730ed.cpp -lncurses
+
+1730ed.o: 1730ed.cpp
+	g++ $(FLAGS) -c 1730ed.cpp
 
 clean:
-	rm -f edit 1730ed2
+	rm -f edit 1730ed2 cs1730ed
 	rm -f *.o
