@@ -24,5 +24,5 @@ Buffer.o: Buffer.cpp
 	g++ $(FLAGS) -c 1730ed.cpp
 
 clean:
-	rm -f edit 1730ed2 cs1730ed
-	rm -f *.o
+	rm -f edit 1730ed2 1730ed
+	rm -f *.o *~ \#*
