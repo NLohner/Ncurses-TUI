@@ -2,6 +2,8 @@
 
 class Buffer{
 
-  
+  String [] lines;
+
+  //random text
 
 }//Buffer
