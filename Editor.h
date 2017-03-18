@@ -1,6 +1,8 @@
 
 class Editor {
 
+ private:
+
  public: 
   
 
