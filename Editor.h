@@ -14,6 +14,7 @@ class Editor {
   int xMax;
   int currY;
   int currX;
+
   
  public: 
   Editor(char *); // constructor, takes in a filename as a parameter (could be argv[1]) 
