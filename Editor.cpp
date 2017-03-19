@@ -48,7 +48,7 @@ void Editor::handleKeyInput() {
     switch(key) {
       
       /* CASES */
-    case KEY_UP:
+    case KEY_UP: //remember to handle scrolling
       if(currY > 0)
 	currY--;
       break;
