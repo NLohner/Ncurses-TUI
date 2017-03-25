@@ -1,6 +1,6 @@
 #include <ncurses.h>
 #include <form.h>
-#include "e.h"
+#include "Editor.h"
 #include <string>
 #include <fcntl.h> //low level I/O
 #include <unistd.h> //close()
@@ -8,7 +8,7 @@
 
 using std::string;
 
-e::e(const char * filename)
+Editor::Editor(const char * filename)
 {
   this->filename = filename; 
 
@@ -47,7 +47,7 @@ e::e(const char * filename)
 }
 
 
-void e::handleKeyInput() {
+void Editor::handleKeyInput() {
   bool listening = true;
   while(listening) {
     int ch = wgetch(win); //notice: keypad is on WINDOW
@@ -86,7 +86,7 @@ void e::handleKeyInput() {
 }
 
 
-void e::openMenu() //when user hits F1
+void Editor::openMenu() //when user hits F1
 {
   
 }
@@ -97,7 +97,8 @@ void displayError()
 }
 
 
-void e::displayFile(string buff, int lineNum) 
+
+void Editor::displayFile(string buff, int lineNum) 
 {   
   form_driver(form, REQ_BEG_FIELD); //go to very beginning of edit area
   for(int i = 0; i < lineNum; i++) 
@@ -108,17 +109,17 @@ void e::displayFile(string buff, int lineNum)
 
 
 	
-void e::save(const char * filename)
+void Editor::save(const char * filename)
 {
 
 }
 
-void e::saveAs(const char * filename)
+void Editor::saveAs(const char * filename)
 {
-  
+
 }
 
-void e::exit() 
+void Editor::exit() 
 {
   unpost_form(form);
   free_form(form);
@@ -131,7 +132,7 @@ void e::exit()
 
 int main(int argc, const char * argv[]) 
 {
-  e ed = e("newfile.txt"); //create the editor 
+  Editor ed = Editor("newfile.txt"); //create the editor 
   ed.handleKeyInput();
   ed.exit();
   return 0;
