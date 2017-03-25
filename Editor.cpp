@@ -101,13 +101,16 @@ void Editor::handleKeyInput() {
 }
 
 
+/* I HAD TO REMOVE THIS TO TEST 1730ed.cpp
 
 int main(int argc, char * argv []) { //test
-  
+
   Editor ed1{argv[1]};
   ed1.handleKeyInput();
   
   endwin();
   return 0;
   
-}
+  }
+
+*/
