@@ -1,12 +1,12 @@
-#ifndef E_H
-#define E_H
+#ifndef EDITOR_H
+#define EDITOR_H
 
 #include <string>
 #include <ncurses.h>
 
 using std::string;
 
-class e
+class Editor
 {
 
  private:
@@ -17,7 +17,7 @@ class e
 
 
  public:
-  e(const char *); //constructor---takes in a filename (the file to edit)
+  Editor(const char *); //constructor---takes in a filename (the file to edit)
   void handleKeyInput(); //listen for key input and handle accordingly 
   void openMenu();
   void displayFile(string, int);
