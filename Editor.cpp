@@ -7,6 +7,7 @@
 #include <string.h>
 
 using std::string;
+using std::to_string;
 
 Editor::Editor(const char * filename)
 {
@@ -16,7 +17,7 @@ Editor::Editor(const char * filename)
   noecho();
   
   mvaddstr(1, 0, "F1: Menu");
-  mvaddstr(1, COLS/2 - 2, "CSCI 1730 Text Editor!");
+  mvaddstr(1, COLS/2 - 8, "CSCI 1730 Text Editor!");
   mvaddstr(LINES-2, 0, filename);
   
 
@@ -47,6 +48,11 @@ Editor::Editor(const char * filename)
 }
 
 
+/*
+ * In order for these keys to work, you must go to PuTTY keyboard settings
+ * and do two things: 1) Make sure Xterm R6 is selected, and 
+ * 2) Ensure that Control-?(127) is selected for the Backspace key.
+ */
 void Editor::handleKeyInput() {
   bool listening = true;
   while(listening) {
@@ -69,7 +75,7 @@ void Editor::handleKeyInput() {
       case 10: //ENTER                          
 	form_driver(form, REQ_NEW_LINE);
 	break;
-      case KEY_BACKSPACE:                                                                                                                                                     
+      case KEY_BACKSPACE:               
 	form_driver(form, REQ_DEL_PREV);
      	break;
       case KEY_F(1):
@@ -99,12 +105,14 @@ void displayError()
 
 void Editor::displayFile(string buff, int lineNum) 
 {   
-  form_driver(form, REQ_BEG_FIELD);
+  form_driver(form, REQ_BEG_FIELD); //go to very beginning of edit area
 
   for(int i = 0; i<lineNum; i++) 
-    form_driver(form, REQ_DOWN_CHAR);
+    form_driver(form, REQ_DOWN_CHAR); //go down lineNum number of lines
   
-  waddstr(win, buff.c_str()); //may not work because of waddstr...test first, then I have another idea 
+  const char * arr = buff.c_str();  //turn string that was passed in into a c_string
+  for(int i = 0; i < strlen(arr); i++)
+    form_driver(form, arr[i]); //add each char from the string individually
 }
 
 
@@ -132,7 +140,7 @@ void Editor::exit()
 
 int main(int argc, const char * argv[]) 
 {
-  Editor ed = Editor("newfile.txt"); //create the editor 
+  Editor ed = Editor("newfile.txt"); //create the editor
   ed.handleKeyInput();
   ed.exit();
   return 0;
