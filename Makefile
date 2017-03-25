@@ -18,11 +18,11 @@ Buffer.o: Buffer.cpp
 	g++ $(FLAGS) -c Buffer.cpp
 
 1730ed: 1730ed.o
-	g++ $(FLAGS) -o 1730ed 1730ed.cpp -lncurses
+	g++ $(FLAGS) -o 1730ed 1730ed.cpp -lncurses -lform
 
 1730ed.o: 1730ed.cpp
 	g++ $(FLAGS) -c 1730ed.cpp
 
 clean:
 	rm -f edit 1730ed2 1730ed
-	rm -f *.o *~ \#*
+	rm -f *.o *~ \#* *.gch
