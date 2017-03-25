@@ -6,7 +6,11 @@
 #include <unistd.h>
 #include <iostream>
 
-Buffer fileToBuffer(Buffer,char*);
+Buffer fileToBuffer(Buffer, char*);
+
+Buffer screenToBuffer(Buffer, Editor);
+
+void saveToFile(Buffer, char*);
 
 const unsigned int BUFF_BYTES = 1024;
 
@@ -78,3 +82,9 @@ void saveToFile(Buffer buf, char* fileName){
   
 
 }//saveToFile
+
+Buffer screenToBuffer(Buffer buf, Editor ed){
+
+  
+
+}//screenToBuffer
