@@ -144,5 +144,4 @@ int main(int argc, const char * argv[])
   ed.handleKeyInput();
   ed.exit();
   return 0;
-
 }
