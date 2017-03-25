@@ -3,17 +3,35 @@
 Buffer::Buffer(){
 }//Buffer
 
+string Buffer::getLine(int line){
+
+  return lines[line];
+
+}//getLine
+
 void Buffer::addLine(string str){
 
-  for(int i = 0; i < MAX_BUFFER_SIZE; i++){
+  str = tabToSpace(str);
 
-    if(lines[i].empty()) lines[i] = str;
+  bool empty = true;
 
-  }//for
+  int pos = 0;
+
+  while(empty && pos < MAX_BUFFER_SIZE){
+
+    empty = !lines[pos].empty();
+
+    if(empty) pos++;
+
+  }//while
+
+  if(lines[pos].empty()) lines[pos] = str;
 
 }//addLine
 
 void Buffer::changeLine(string str, int line){
+
+  str = tabToSpace(str);
 
   lines[line] = str;
 
@@ -21,19 +39,26 @@ void Buffer::changeLine(string str, int line){
 
 void Buffer::deleteLine(int line){
 
-  lines[line] = line;
+  lines[line] = "";
 
 }//deleteLine
 
-string Buffer::tabToSpace(string str){
+string tabToSpace(string str){
 
   int pos;
 
-  while((pos = str.find('\t')) != string::npos){
+  pos = str.find("\t");
 
-    str.replace(pos,1,"    ");
+  if(pos == string::npos){
 
-  }//while
+    return str;
+
+  }//if
+
+  else{
+
+    return tabToSpace(str.replace(pos,1,"    "));
+
+  }//else
 
 }//tabToSpace
-
