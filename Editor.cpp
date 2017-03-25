@@ -77,8 +77,7 @@ void Editor::handleKeyInput() {
 	listening = false;
 	break;
       default:
-	waddch(win, ch);
-	form_driver(form, REQ_NEXT_CHAR);
+	form_driver(form, ch);
 	break;
       } //switch
   }//while	
@@ -100,11 +99,12 @@ void displayError()
 
 void Editor::displayFile(string buff, int lineNum) 
 {   
-  form_driver(form, REQ_BEG_FIELD); //go to very beginning of edit area
-  for(int i = 0; i < lineNum; i++) 
-    form_driver(form, REQ_DOWN_CHAR); //go down lineNum number of lines 
-    
-  waddstr(win, buff.c_str()); //add str at current pos
+  form_driver(form, REQ_BEG_FIELD);
+
+  for(int i = 0; i<lineNum; i++) 
+    form_driver(form, REQ_DOWN_CHAR);
+  
+  waddstr(win, buff.c_str()); //may not work because of waddstr...test first, then I have another idea 
 }
 
 
