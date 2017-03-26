@@ -8,9 +8,11 @@
 
 Buffer fileToBuffer(Buffer, char*);
 
-Buffer screenToBuffer(Buffer, Editor);
+Buffer screenToBuffer(Buffer,Editor);
 
 void saveToFile(Buffer, char*);
+
+void bufferToScreen(Buffer,Editor);
 
 const unsigned int BUFF_BYTES = 1024;
 
@@ -23,6 +25,8 @@ int main(int argc, char * argv[]){
 
   //create editor
   Editor ed(argv[1]);
+
+  bufferToScreen(fileBuffer,ed);
 
   //code to pass the Buffer to the Editor and to print it to the screen
 
@@ -65,7 +69,7 @@ Buffer fileToBuffer(Buffer buf, char * arg){
 
     else{
 
-      str = str + cBuffer[i];
+      str += cBuffer[i];
 
     }//else
 
@@ -88,3 +92,17 @@ Buffer screenToBuffer(Buffer buf, Editor ed){
   
 
 }//screenToBuffer
+
+void bufferToScreen(Buffer buf, Editor ed){
+
+  int i = 0;
+
+  while((buf.getLine(i))[0] != '\b'){
+  
+    ed.displayFile(buf.getLine(i), i);
+
+    i++;
+
+  }//while
+
+}//bufferToScreen
