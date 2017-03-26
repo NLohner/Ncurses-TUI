@@ -137,8 +137,7 @@ void Editor::exit()
 }
 
 
-/*
-int main(int argc, const char * argv[]) 
+/*int main(int argc, const char * argv[]) 
 {
   Editor ed = Editor("newfile.txt"); //create the editor
   ed.handleKeyInput();
