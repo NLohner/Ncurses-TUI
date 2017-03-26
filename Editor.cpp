@@ -111,7 +111,7 @@ void Editor::displayFile(string buff, int lineNum)
     form_driver(form, REQ_DOWN_CHAR); //go down lineNum number of lines
   
   const char * arr = buff.c_str();  //turn string that was passed in into a c_string
-  for(int i = 0; i < strlen(arr); i++)
+  for(unsigned int i = 0; i < strlen(arr); i++)
     form_driver(form, arr[i]); //add each char from the string individually
 }
 
@@ -137,7 +137,7 @@ void Editor::exit()
 }
 
 
-
+/*
 int main(int argc, const char * argv[]) 
 {
   Editor ed = Editor("newfile.txt"); //create the editor
@@ -145,3 +145,4 @@ int main(int argc, const char * argv[])
   ed.exit();
   return 0;
 }
+*/
