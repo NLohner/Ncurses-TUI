@@ -22,7 +22,7 @@ Editor::Editor(const char * filename)
   
 
   /* Create fields (field[0] is the text editing space) */
-  field[0] = new_field(LINES-8, COLS-8, 1, 1, 0, 0); //height, width, starty, startx, number of offscreen rows and number of additional working buffers.
+  field[0] = new_field(LINES-7, COLS-7, 1, 1, 0, 0); //height, width, starty, startx, number of offscreen rows and number of additional working buffers.
   field[1] = NULL; //the last element in array field must be NULL   
   field_opts_off(field[0], O_AUTOSKIP | O_STATIC); //makes the field growable 
   
