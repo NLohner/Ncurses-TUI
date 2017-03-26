@@ -5,21 +5,26 @@
 #include <fcntl.h> //low level I/O
 #include <unistd.h> //close()
 #include <string.h>
+#include <vector>
 
 using std::string;
-using std::to_string;
+using std::vector;
 
 Editor::Editor(const char * filename)
 {
   this->filename = filename; 
+  is_saved = false;
 
   initscr();
   noecho();
   
+  start_color();
+  init_pair(1, COLOR_CYAN, COLOR_BLACK);
+  attron(COLOR_PAIR(1));
   mvaddstr(1, 0, "F1: Menu");
   mvaddstr(1, COLS/2 - 8, "CSCI 1730 Text Editor!");
   mvaddstr(LINES-2, 0, filename);
-  
+  attroff(COLOR_PAIR(1));  
 
   /* Create fields (field[0] is the text editing space) */
   field[0] = new_field(LINES-7, COLS-7, 1, 1, 0, 0); //height, width, starty, startx, number of offscreen rows and number of additional working buffers.
@@ -33,8 +38,10 @@ Editor::Editor(const char * filename)
   /* Create the window (border) */
   win = newwin(LINES-4, COLS-2, 2, 0); //where you want the border
   keypad(win, TRUE);
+  init_pair(3, COLOR_RED, COLOR_BLACK);
+  wattron(win, COLOR_PAIR(3));
   wborder(win, '|', '|', '_', '_', ' ',' ', '|', '|');
-  
+  wattroff(win, COLOR_PAIR(3));
   set_form_win(form, win);
   set_form_sub(form, derwin(win, LINES-6, COLS-6, 1, 1)); //must be smaller/inside win
  
@@ -72,14 +79,17 @@ void Editor::handleKeyInput() {
       case KEY_LEFT:
 	form_driver(form, REQ_PREV_CHAR);
 	break;
-      case 10: //ENTER                          
+      case 10: //ENTER                  
 	form_driver(form, REQ_NEW_LINE);
 	break;
       case KEY_BACKSPACE:               
 	form_driver(form, REQ_DEL_PREV);
      	break;
       case KEY_F(1):
-	openMenu(); //does nothing yet...leave loop
+	listening = false; 
+	openMenu();
+	break;
+      case KEY_F(2): //Alternative way of quitting (other than Menu --> Exit) 
 	listening = false;
 	break;
       default:
@@ -87,20 +97,206 @@ void Editor::handleKeyInput() {
 	break;
       } //switch
   }//while	
-  
+ 
 }
 
 
 void Editor::openMenu() //when user hits F1
 {
-  
-}
+  init_pair(2, COLOR_WHITE, COLOR_BLUE);
+  menuWin = newwin(6, COLS-12, 5, 5); //lines, cols, starty, startx
+  wborder(menuWin, '|', '|', '_', '_', ' ',' ', '|', '|');
+  refresh(); //may have to refresh win
+  wrefresh(menuWin);
+  keypad(menuWin, true);
 
-void displayError() 
+  const char * choices[4] = {"Open", "Save", "Save As", "Exit"};
+  int toggle = 0; //index of choice that's supposed to be highlighted
+
+  while(1)
+    {
+      for(int i = 0; i < 4; i++) {
+	if(i == toggle)
+	  wattron(menuWin, A_REVERSE); //highlight at toggle
+	wattron(menuWin, COLOR_PAIR(2));
+	mvwprintw(menuWin, i+1, 1, choices[i]); //print choices
+	wattroff(menuWin, COLOR_PAIR(2));
+	wattroff(menuWin, A_REVERSE); //toggle off anything that was highlighted before 
+      } //for
+      
+      int ch = wgetch(menuWin); //get char from not just any win, but menuWin
+      switch(ch)
+	{
+	case KEY_UP:
+	  toggle--;
+	  if(toggle == -1)
+	    toggle = 0; //don't let it go past bounds
+	  break;
+	case KEY_DOWN:
+	  toggle++;
+	  if(toggle == 4)
+	    toggle = 3;
+	  break;
+
+	  /* Don't put case 10 (ENTER) inside of here. Put outside so that "break" is for the WHILE loop */
+
+	case 10: //ENTER
+	  break;
+	}
+      
+      /* User presses Enter on a choice */
+      if(ch == 10) { 
+	
+	if(toggle == 0) openFile();
+	if(toggle == 1) save(filename);
+	if(toggle == 2) saveAs(filename);
+	if(toggle == 3) exit(); 
+	break; //leave while loop
+	
+      } //if
+    } //while
+} //openMenu()
+
+void displayError()
 {
+  
+} 
+
+string Editor::promptFileName() /* For the Menu options */
+{
+  int letter;
+  vector<char> vec = {}; //to keep track of what user types
+
+  werase(menuWin); //gets rid of border!
+  mvwprintw(menuWin, 1, 1, "Enter name of file to open (note: backspaces not allowed):");
+  wmove(menuWin, 2, 1);
+  while(1) {
+    letter = wgetch(menuWin);
+    if(letter == '\n')
+      break;
+    else {
+      waddch(menuWin, letter);
+      vec.push_back(letter);
+    }
+  }
+  string nameEntered = string(vec.begin(), vec.end()); //make a string out of the vector<char>
+  return nameEntered; 
 
 }
 
+/*
+ * Opens a menu with choices "Yes" and "No" for the user to choose from.
+ * @return 1 if user chose YES, 0 if user chose NO. 
+ */
+int Editor::promptYesOrNo() 
+{
+  const char * choices[2] = {"Yes" , "No"};
+  int toggle = 0;
+ 
+  while(1) 
+    { 
+      for(int i = 0; i < 2; i++) {
+	if(i == toggle)
+	  wattron(menuWin, A_REVERSE); //highlight at toggle
+	wattron(menuWin, COLOR_PAIR(2));
+	mvwprintw(menuWin, i+2, 1, choices[i]); //print choices
+	wattroff(menuWin, COLOR_PAIR(2));
+	wattroff(menuWin, A_REVERSE); //toggle off anything that was highlighted before
+      } //for
+      
+      
+      int ch = wgetch(menuWin); //get char from not just any win, but menuWin
+      switch(ch)
+	{
+	case KEY_UP:
+	  toggle--;
+	  if(toggle == -1)
+	    toggle = 0; //don't let it go past bounds
+	  break;
+	case KEY_DOWN:
+	  toggle++;
+	  if(toggle == 2)
+	    toggle = 1;
+	  break;
+	  
+	case 10: //ENTER
+	  break;
+	}
+      if(ch == 10) {
+	if(toggle == 0) return 1; //return 1 for YES 
+	if(toggle == 1) return 0; //return 0 for NO
+      } //if
+    }//while
+}//promptYesOrNo()
+
+void Editor::openFile() 
+{
+  string name = promptFileName();
+
+  werase(menuWin);
+  if(is_saved == false) 
+    mvwprintw(menuWin, 1, 1, "Save changes to current file before opening new one?");
+  
+  int yesOrNo = promptYesOrNo();
+  if(yesOrNo == 1) //YES
+    {
+
+    }
+  else if(yesOrNo == 0) //NO
+    {
+
+    }
+  exit();
+ 
+  /* Create new Editor for 'name' */
+
+}
+
+   
+
+
+
+
+string Editor::getText() 
+{
+  //int size = strlen(trim_whitespaces(field_buffer(field[0], 0))); //gives number of chars typed into screen 
+}
+
+
+
+/* 
+ * Needed because NCURSES fills blank fields with spaces.
+ * Source: https://gist.github.com/alan-mushi/c8a6f34d1df18574f643
+ */
+char* Editor::trim_whitespaces(char *str)
+{
+  char *end;
+  
+  // trim leading space
+  while(isspace(*str))
+    str++;
+
+  if(*str == 0) // all spaces?
+    return str;
+  
+  // trim trailing space
+  end = str + strlen(str) - 1;
+
+  while(end > str && isspace(*end))
+    end--;
+
+  // write new null terminator
+  *(end+1) = '\0';
+
+  return str;
+
+}
+
+
+void Editor::clearScreen()
+{
+  form_driver(form, REQ_CLR_FIELD);
+}
 
 
 void Editor::displayFile(string buff, int lineNum) 
@@ -119,12 +315,14 @@ void Editor::displayFile(string buff, int lineNum)
 	
 void Editor::save(const char * filename)
 {
-
+  //code to save
+  exit();
 }
 
 void Editor::saveAs(const char * filename)
 {
-
+  //code to saveAs
+  exit();
 }
 
 void Editor::exit() 
