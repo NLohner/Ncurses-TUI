@@ -9,11 +9,13 @@
 
 using std::string;
 using std::vector;
+const unsigned int BUFF_BYTES = 1024;
 
 Editor::Editor(const char * filename)
 {
   this->filename = filename; 
   is_saved = false;
+
 
   initscr();
   noecho();
@@ -44,14 +46,15 @@ Editor::Editor(const char * filename)
   wattroff(win, COLOR_PAIR(3));
   set_form_win(form, win);
   set_form_sub(form, derwin(win, LINES-6, COLS-6, 1, 1)); //must be smaller/inside win
- 
+
   /* Order is very important here: */
   refresh();
   post_form(form);
   wrefresh(win);
   refresh();
-  
+
   form_driver(form, REQ_INS_CHAR); //so that cursor starts inside the form window
+  
 }
 
 
@@ -61,6 +64,7 @@ Editor::Editor(const char * filename)
  * 2) Ensure that Control-?(127) is selected for the Backspace key.
  */
 void Editor::handleKeyInput() {
+  //set_field_buffer(field[0], 0, "");
   bool listening = true;
   while(listening) {
     int ch = wgetch(win); //notice: keypad is on WINDOW
@@ -80,19 +84,19 @@ void Editor::handleKeyInput() {
 	form_driver(form, REQ_PREV_CHAR);
 	break;
       case 10: //ENTER                  
+	is_saved = false; //because text was changed/edited 
 	form_driver(form, REQ_NEW_LINE);
 	break;
-      case KEY_BACKSPACE:               
+      case KEY_BACKSPACE:
+	is_saved = false;
 	form_driver(form, REQ_DEL_PREV);
      	break;
-      case KEY_F(1):
+      case KEY_F(1): //the menu is the only way to exit other than CTRL-x
 	listening = false; 
 	openMenu();
 	break;
-      case KEY_F(2): //Alternative way of quitting (other than Menu --> Exit) 
-	listening = false;
-	break;
       default:
+	is_saved = false;
 	form_driver(form, ch);
 	break;
       } //switch
@@ -105,7 +109,8 @@ void Editor::openMenu() //when user hits F1
 {
   init_pair(2, COLOR_WHITE, COLOR_BLUE);
   menuWin = newwin(6, COLS-12, 5, 5); //lines, cols, starty, startx
-  wborder(menuWin, '|', '|', '_', '_', ' ',' ', '|', '|');
+  wbkgd(menuWin, COLOR_PAIR(2)); 
+  //wborder(menuWin, '|', '|', '_', '_', ' ',' ', '|', '|');
   refresh(); //may have to refresh win
   wrefresh(menuWin);
   keypad(menuWin, true);
@@ -118,9 +123,7 @@ void Editor::openMenu() //when user hits F1
       for(int i = 0; i < 4; i++) {
 	if(i == toggle)
 	  wattron(menuWin, A_REVERSE); //highlight at toggle
-	wattron(menuWin, COLOR_PAIR(2));
 	mvwprintw(menuWin, i+1, 1, choices[i]); //print choices
-	wattroff(menuWin, COLOR_PAIR(2));
 	wattroff(menuWin, A_REVERSE); //toggle off anything that was highlighted before 
       } //for
       
@@ -150,15 +153,26 @@ void Editor::openMenu() //when user hits F1
 	if(toggle == 0) openFile();
 	if(toggle == 1) save(filename);
 	if(toggle == 2) saveAs(filename);
-	if(toggle == 3) exit(); 
+	if(toggle == 3) {
+	  promptSaveChanges();
+	  exit();
+	} 
 	break; //leave while loop
 	
       } //if
     } //while
 } //openMenu()
 
-void displayError()
+void Editor::displayError()
 {
+  werase(menuWin);
+  mvwprintw(menuWin, 1, 1, strerror(errno));
+  if(errno == EACCES)
+    mvwprintw(menuWin, 2, 1, "Please only try opening files that you have access to. Returning to Menu.");
+  if(errno == ENOENT)
+    mvwprintw(menuWin, 2, 1, "Please try opening again with a file that exists.");  
+  refresh();
+  wrefresh(menuWin);
   
 } 
 
@@ -229,37 +243,132 @@ int Editor::promptYesOrNo()
     }//while
 }//promptYesOrNo()
 
+
+void Editor::promptSaveChanges() {
+  werase(menuWin);
+  if(is_saved == false)
+    mvwprintw(menuWin, 1, 1, "Save changes to current file before leaving?");
+
+  int yesOrNo = promptYesOrNo();
+  if(yesOrNo == 1) //YES
+    {
+      //save this file
+    }
+  else if(yesOrNo == 0) //NO
+    {
+      //don't save
+    }
+
+}
+
+void Editor::displayFile(string buff, int lineNum)
+{
+  form_driver(form, REQ_BEG_FIELD); //go to very beginning of edit area
+
+  for(int i = 0; i<lineNum; i++)
+    form_driver(form, REQ_DOWN_CHAR); //go down lineNum number of lines
+  
+  const char * arr = buff.c_str();  //turn string that was passed in into a c_string
+  for(unsigned int i = 0; i < strlen(arr); i++)
+    form_driver(form, arr[i]); //add each char from the string individually
+}
+
+/**
+ * Moves contents (chars) of file to a buffer.
+ * @param buf the Buffer to store file contents in
+ * @param arg the name of the file to get contents from
+ * @returns the buffer on success, NULL on error 
+ */
+Buffer Editor::fileToBuffer(Buffer buf, const char * arg){
+  
+  int fd;
+  int off;
+
+  fd = open(arg, O_RDONLY);
+  
+  char cBuffer[BUFF_BYTES];
+
+  //reads the whole file into the char array
+  while((off = read(fd,cBuffer,BUFF_BYTES)) > 0){}
+  int i = 0;
+  int line = 0;
+  string str = "";
+  while(i < BUFF_BYTES && cBuffer[i] != '\0'){
+    if(cBuffer[i] == '\n'){
+      buf.changeLine(str,line);
+      line++;
+      str = "";
+    }//if
+    
+    else{
+      str += cBuffer[i];
+    }//else
+    i++;
+  }//while
+  
+  return buf;
+} //fileToBuffer()
+
+
+void saveToFile(Buffer buf, char* fileName){
+
+
+
+}//saveToFile
+
+Buffer screenToBuffer(Buffer buf, Editor ed){
+
+
+
+
+}//screenToBuffer
+
+void Editor::bufferToScreen(Buffer buf, Editor ed){
+
+  int i = 0;
+
+  while((buf.getLine(i))[0] != '\b'){
+
+    ed.displayFile(buf.getLine(i), i);
+
+    i++;
+
+  } //while
+
+}//bufferToScreen()
+
+
+
 void Editor::openFile() 
 {
   string name = promptFileName();
 
-  werase(menuWin);
-  if(is_saved == false) 
-    mvwprintw(menuWin, 1, 1, "Save changes to current file before opening new one?");
+  /* Try to open specified filename */
+  if(fd = open(name.c_str(), O_RDONLY) == -1) {
+    displayError();
+    getch(); //wait
+    openMenu();
+  }
   
-  int yesOrNo = promptYesOrNo();
-  if(yesOrNo == 1) //YES
-    {
+  else { //if open was successful
+    Buffer fileBuffer;
+    fileBuffer = fileToBuffer(fileBuffer, name.c_str()); //uses open() and read()
+    
+    promptSaveChanges();
+    exit();   
 
-    }
-  else if(yesOrNo == 0) //NO
-    {
-
-    }
-  exit();
- 
-  /* Create new Editor for 'name' */
-
+    /* Create new Editor for 'name' */
+    Editor neditor(name.c_str());
+    bufferToScreen(fileBuffer, neditor); //dump file contents into Editor 
+    neditor.handleKeyInput();    
+  }
 }
-
-   
-
+  
 
 
-
-string Editor::getText() 
+const char * Editor::getText() 
 {
-  //int size = strlen(trim_whitespaces(field_buffer(field[0], 0))); //gives number of chars typed into screen 
+  return trim_whitespaces(field_buffer(field[0], 0));
 }
 
 
@@ -280,7 +389,7 @@ char* Editor::trim_whitespaces(char *str)
     return str;
   
   // trim trailing space
-  end = str + strlen(str) - 1;
+  end = str + 9000;
 
   while(end > str && isspace(*end))
     end--;
@@ -297,21 +406,6 @@ void Editor::clearScreen()
 {
   form_driver(form, REQ_CLR_FIELD);
 }
-
-
-void Editor::displayFile(string buff, int lineNum) 
-{   
-  form_driver(form, REQ_BEG_FIELD); //go to very beginning of edit area
-
-  for(int i = 0; i<lineNum; i++) 
-    form_driver(form, REQ_DOWN_CHAR); //go down lineNum number of lines
-  
-  const char * arr = buff.c_str();  //turn string that was passed in into a c_string
-  for(unsigned int i = 0; i < strlen(arr); i++)
-    form_driver(form, arr[i]); //add each char from the string individually
-}
-
-
 	
 void Editor::save(const char * filename)
 {
@@ -325,21 +419,14 @@ void Editor::saveAs(const char * filename)
   exit();
 }
 
+
 void Editor::exit() 
-{
+{    
   unpost_form(form);
   free_form(form);
   free_field(field[0]);
+  erase();
   endwin();
-  //close(fd); 
+  close(fd); 
 }
 
-
-/*int main(int argc, const char * argv[]) 
-{
-  Editor ed = Editor("newfile.txt"); //create the editor
-  ed.handleKeyInput();
-  ed.exit();
-  return 0;
-}
-*/
