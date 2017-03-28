@@ -6,103 +6,30 @@
 #include <unistd.h>
 #include <iostream>
 
-Buffer fileToBuffer(Buffer, char*);
-
-Buffer screenToBuffer(Buffer,Editor);
-
-void saveToFile(Buffer, char*);
-
-void bufferToScreen(Buffer,Editor);
-
-const unsigned int BUFF_BYTES = 1024;
+using std::cout;
+using std::endl;
 
 int main(int argc, char * argv[]){
 
-  Buffer fileBuffer;
-
-  //set the buffer 
-  fileBuffer = fileToBuffer(fileBuffer, argv[1]);
-
-  //create editor
-  Editor ed(argv[1]);
-
-  bufferToScreen(fileBuffer,ed);
-
-  //code to pass the Buffer to the Editor and to print it to the screen
-
-  ed.handleKeyInput();
-
-  endwin();
+  Buffer buff;
+  int fdes;
+  
+  fdes = open(argv[1], O_RDONLY);
+  
+  if(fdes == -1 || argc != 2 ) {
+    Editor ed("New File");
+    ed.handleKeyInput();
+  }
+  
+  else { //if argv[1] is an existing file that can be opened 
+    Editor ed(argv[1]);
+    buff = ed.fileToBuffer(buff, argv[1]);  
+    ed.bufferToScreen(buff, ed); //put file's contents into edit area 
+    ed.handleKeyInput();
+  }
+  
+  
   return EXIT_SUCCESS;
-
+  
 }//main
 
-Buffer fileToBuffer(Buffer buf, char * arg){
-
-  int  fd;
-  int off;
-
-  fd = open(arg, O_RDONLY);
-
-  char cBuffer[BUFF_BYTES];
-
-  //reads the whole file into the char array
-  while((off = read(fd,cBuffer,BUFF_BYTES)) > 0){}
-
-  int i = 0;
-
-  int line = 0;
-
-  string str = "";
-
-  while(i < BUFF_BYTES && cBuffer[i] != '\0'){
-
-    if(cBuffer[i] == '\n'){
-
-      buf.changeLine(str,line);
-
-      line++;
-
-      str = "";
-
-    }//if
-
-    else{
-
-      str += cBuffer[i];
-
-    }//else
-
-    i++;
-
-  }//while
-
-  return buf;
-
-}//openFile
-
-void saveToFile(Buffer buf, char* fileName){
-
-  
-
-}//saveToFile
-
-Buffer screenToBuffer(Buffer buf, Editor ed){
-
-  
-
-}//screenToBuffer
-
-void bufferToScreen(Buffer buf, Editor ed){
-
-  int i = 0;
-
-  while((buf.getLine(i))[0] != '\b'){
-  
-    ed.displayFile(buf.getLine(i), i);
-
-    i++;
-
-  }//while
-
-}//bufferToScreen
