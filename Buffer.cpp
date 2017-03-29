@@ -2,7 +2,7 @@
 
 Buffer::Buffer(){
 
-  for(int i = 0; i < MAX_BUFFER_SIZE; i++){
+  for(unsigned int i = 0; i < MAX_BUFFER_SIZE; i++){
 
     lines[i] = '\b';
 
@@ -22,7 +22,7 @@ void Buffer::addLine(string str){
 
   bool empty = true;
 
-  int pos = 0;
+  unsigned int pos = 0;
 
   while(empty && pos < MAX_BUFFER_SIZE){
 
@@ -52,7 +52,7 @@ void Buffer::deleteLine(int line){
 
 string tabToSpace(string str){
 
-  int pos;
+  int unsigned pos;
 
   pos = str.find("\t");
 
