@@ -19,6 +19,7 @@ int main(int argc, char * argv[]){
   if(fdes == -1 || argc != 2 ) {
     Editor ed("New File");
     ed.handleKeyInput();
+    endwin();
   }
   
   else { //if argv[1] is an existing file that can be opened 
@@ -26,8 +27,8 @@ int main(int argc, char * argv[]){
     buff = ed.fileToBuffer(buff, argv[1]);  
     ed.bufferToScreen(buff, ed); //put file's contents into edit area 
     ed.handleKeyInput();
+    endwin();
   }
-  
   
   return EXIT_SUCCESS;
   
