@@ -16,7 +16,6 @@ Editor::Editor(const char * filename)
   this->filename = filename; 
   is_saved = false;
 
-
   initscr();
   noecho();
   
@@ -47,6 +46,7 @@ Editor::Editor(const char * filename)
   set_form_win(form, win);
   set_form_sub(form, derwin(win, LINES-6, COLS-6, 1, 1)); //must be smaller/inside win
 
+
   /* Order is very important here: */
   refresh();
   post_form(form);
@@ -64,8 +64,8 @@ Editor::Editor(const char * filename)
  * 2) Ensure that Control-?(127) is selected for the Backspace key.
  */
 void Editor::handleKeyInput() {
-  //set_field_buffer(field[0], 0, "");
   bool listening = true;
+  Buffer buf;
   while(listening) {
     int ch = wgetch(win); //notice: keypad is on WINDOW
    
@@ -83,7 +83,7 @@ void Editor::handleKeyInput() {
       case KEY_LEFT:
 	form_driver(form, REQ_PREV_CHAR);
 	break;
-      case 10: //ENTER                  
+      case 10: //ENTER 
 	is_saved = false; //because text was changed/edited 
 	form_driver(form, REQ_NEW_LINE);
 	break;
@@ -170,7 +170,7 @@ void Editor::displayError()
   if(errno == EACCES)
     mvwprintw(menuWin, 2, 1, "Please only try opening files that you have access to. Returning to Menu.");
   if(errno == ENOENT)
-    mvwprintw(menuWin, 2, 1, "Please try opening again with a file that exists.");  
+    mvwprintw(menuWin, 2, 1, "Please try opening a file that exists.");
   refresh();
   wrefresh(menuWin);
   
@@ -182,7 +182,7 @@ string Editor::promptFileName() /* For the Menu options */
   vector<char> vec = {}; //to keep track of what user types
 
   werase(menuWin); //gets rid of border!
-  mvwprintw(menuWin, 1, 1, "Enter name of file to open (note: backspaces not allowed):");
+  mvwprintw(menuWin, 1, 1, "Enter name of file (note: backspaces not allowed):");
   wmove(menuWin, 2, 1);
   while(1) {
     letter = wgetch(menuWin);
@@ -245,19 +245,21 @@ int Editor::promptYesOrNo()
 
 
 void Editor::promptSaveChanges() {
-  werase(menuWin);
-  if(is_saved == false)
+  if(is_saved == false) {
+    refresh();
+    wrefresh(menuWin);
+    werase(menuWin);
     mvwprintw(menuWin, 1, 1, "Save changes to current file before leaving?");
-
-  int yesOrNo = promptYesOrNo();
+    int yesOrNo = promptYesOrNo();
   if(yesOrNo == 1) //YES
     {
-      //save this file
+      //code to save 
     }
   else if(yesOrNo == 0) //NO
     {
       //don't save
     }
+  }
 
 }
 
@@ -290,7 +292,7 @@ Buffer Editor::fileToBuffer(Buffer buf, const char * arg){
 
   //reads the whole file into the char array
   while((off = read(fd,cBuffer,BUFF_BYTES)) > 0){}
-  int i = 0;
+  unsigned int i = 0;
   int line = 0;
   string str = "";
   while(i < BUFF_BYTES && cBuffer[i] != '\0'){
@@ -309,19 +311,20 @@ Buffer Editor::fileToBuffer(Buffer buf, const char * arg){
   return buf;
 } //fileToBuffer()
 
-
+/*
 void saveToFile(Buffer buf, char* fileName){
 
-
+  
 
 }//saveToFile
 
-Buffer screenToBuffer(Buffer buf, Editor ed){
 
+Buffer Editor::screenToBuffer(Buffer buf, Editor ed){
 
+  
 
-
-}//screenToBuffer
+} //screenToBuffer()
+*/
 
 void Editor::bufferToScreen(Buffer buf, Editor ed){
 
@@ -341,10 +344,11 @@ void Editor::bufferToScreen(Buffer buf, Editor ed){
 
 void Editor::openFile() 
 {
+  int fd;
   string name = promptFileName();
-
+ 
   /* Try to open specified filename */
-  if(fd = open(name.c_str(), O_RDONLY) == -1) {
+  if((fd = open(name.c_str(), O_RDONLY)) == -1) {
     displayError();
     getch(); //wait
     openMenu();
@@ -353,9 +357,8 @@ void Editor::openFile()
   else { //if open was successful
     Buffer fileBuffer;
     fileBuffer = fileToBuffer(fileBuffer, name.c_str()); //uses open() and read()
-    
-    promptSaveChanges();
-    exit();   
+    promptSaveChanges();  
+    exit();
 
     /* Create new Editor for 'name' */
     Editor neditor(name.c_str());
@@ -363,43 +366,8 @@ void Editor::openFile()
     neditor.handleKeyInput();    
   }
 }
-  
+ 
 
-
-const char * Editor::getText() 
-{
-  return trim_whitespaces(field_buffer(field[0], 0));
-}
-
-
-
-/* 
- * Needed because NCURSES fills blank fields with spaces.
- * Source: https://gist.github.com/alan-mushi/c8a6f34d1df18574f643
- */
-char* Editor::trim_whitespaces(char *str)
-{
-  char *end;
-  
-  // trim leading space
-  while(isspace(*str))
-    str++;
-
-  if(*str == 0) // all spaces?
-    return str;
-  
-  // trim trailing space
-  end = str + 9000;
-
-  while(end > str && isspace(*end))
-    end--;
-
-  // write new null terminator
-  *(end+1) = '\0';
-
-  return str;
-
-}
 
 
 void Editor::clearScreen()
@@ -409,16 +377,78 @@ void Editor::clearScreen()
 	
 void Editor::save(const char * filename)
 {
+  int fd;
+  string s = "(proof of save): This file has been saved! ";
+  fd = open(filename, O_WRONLY);
+  write(fd, s.c_str(), strlen(s.c_str())); //check errors here
+
   //code to save
-  exit();
+
+  werase(menuWin);
+  mvwprintw(menuWin, 1, 1, "Save successful. Press any KEY to return to Menu.");
+  refresh();
+  wrefresh(menuWin);
+  getch();
+  is_saved = true;
+  openMenu();
+	      
 }
+  
 
 void Editor::saveAs(const char * filename)
 {
-  //code to saveAs
-  exit();
-}
+  int filedes;
+  string newname = promptFileName();
+  
+  if((filedes = open(newname.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_TRUNC)) == -1) { //crate new file  
+    if(errno == EEXIST) {
+      wclear(menuWin);
+      mvwprintw(menuWin, 1, 1, strerror(errno));
+      mvwprintw(menuWin, 1, 12, ". Override existing file?");
+   
+      /* YES OR NO */
+      int yon = promptYesOrNo(); //override or no
+      if(yon == 1) { //YES 
+	werase(menuWin);
+	mvwprintw(menuWin, 1, 1, "Save successful. Press any KEY to return to Menu.");
+	refresh();
+	wrefresh(menuWin);
+	getch();
+	is_saved = true;
+	openMenu();
+      }
+      else if(yon == 0) { //NO
+	werase(menuWin);
+	mvwprintw(menuWin, 1, 1, "Did not override. Save again with a different name.");
+	refresh();
+	wrefresh(menuWin);
+	getch();
+	openMenu();
+      }
+      
+    }
+    else { //error other than EEXIST 
+      displayError();
+      openMenu();
+    }
+    refresh();
+    wrefresh(menuWin);
 
+  }
+  else{ //no error returned 
+    //code to saveas behind the scenes
+    string s = "This file has been saved.";
+    write(filedes, s.c_str(), strlen(s.c_str())); 
+    
+    werase(menuWin);
+    mvwprintw(menuWin, 1, 1, "Save successful. Press any KEY to return to Menu.");
+    refresh();
+    wrefresh(menuWin);
+    getch();
+    is_saved = true;
+    openMenu();
+    } 
+}
 
 void Editor::exit() 
 {    
@@ -426,7 +456,7 @@ void Editor::exit()
   free_form(form);
   free_field(field[0]);
   erase();
-  endwin();
-  close(fd); 
+  //endwin(); 
+  //close(fd); 
 }
 
